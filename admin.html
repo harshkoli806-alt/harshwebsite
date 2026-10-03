@@ -92,7 +92,9 @@
         <textarea id="content" placeholder="Paste the prompt here..."></textarea>
       </div>
       <div id="f_guide" class="hidden">
-        <label>The guide, in Markdown <span class="hint"># Heading, - bullet, ```code```</span></label>
+        <label>Notion link <span class="hint">— paste a shared Notion page and it imports automatically</span></label>
+        <input type="text" id="notion_url" placeholder="https://your.notion.site/..." />
+        <label>…or write it in Markdown <span class="hint">(leave blank if using a Notion link)</span></label>
         <textarea id="guide_md" placeholder="# Step 1&#10;Do this...&#10;&#10;# Step 2&#10;Then this..."></textarea>
       </div>
       <div id="f_link" class="hidden">
@@ -156,6 +158,7 @@ $('publish').onclick=async ()=>{
     intro:$('intro').value.trim(), box_label: TYPE==='prompt'?'Copy the prompt':'',
     content: TYPE==='prompt'?$('content').value:'',
     guide_md: TYPE==='guide'?$('guide_md').value:'',
+    notion_url: TYPE==='guide'?$('notion_url').value.trim():'',
     download_url: TYPE==='link'?$('download').value.trim():'',
     imageBase64: imgData||'' };
 
@@ -172,13 +175,13 @@ $('publish').onclick=async ()=>{
     }
     $('publish').disabled=false;
     if(seen){ msg('Live ✓  Your guide is on the site now.','ok'); resetForm(); }
-    else { msg('Sent. It should appear shortly — refresh your site in a moment.','ok'); resetForm(); }
+    else { msg('Sent ✓ Importing from Notion can take a few seconds — refresh your site shortly.','ok'); resetForm(); }
   } else {
     $('publish').disabled=false; msg('Sent ✓  It will appear on your site in a few seconds.','ok'); resetForm();
   }
 };
 function msg(t,cls){ const m=$('msg'); m.textContent=t; m.className='msg '+(cls||''); }
-function resetForm(){ ['title','kicker','accent','desc','intro','content','guide_md','download'].forEach(id=>{ if($(id)) $(id).value=''; });
+function resetForm(){ ['title','kicker','accent','desc','intro','content','guide_md','download','notion_url'].forEach(id=>{ if($(id)) $(id).value=''; });
   imgData=''; $('preview').style.display='none'; $('dropPh').textContent='Tap to attach a cover, or drag one here'; }
 </script>
 </body>
