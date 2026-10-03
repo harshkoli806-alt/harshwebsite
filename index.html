@@ -518,7 +518,7 @@ async function deliver(m){
   const box=$('box'); const art=$('article');
   if(hasArticle||hasGuide){
     art.innerHTML = hasArticle ? m.article : '<p class="muted">Loading…</p>';
-    art.style.display=''; box.style.display='none';
+    art.style.display='block'; box.style.display='none';
     $('fileArea').innerHTML=''; $('pitch').style.display='none'; $('reveal').classList.add('show');
     if(hasGuide){ art.innerHTML = await renderMarkdown(m.guideMd); }
     return;
