@@ -317,7 +317,13 @@
 const CONFIG = {
   formEndpoint: "https://script.google.com/macros/s/AKfycbz-Q6jG7vBqwYOtYEwlOCZFRi6R0saatVf4_aViUdcySEt3topYQBiWEpx8SDQZ74Lh/exec",
   provider: "gsheet",        // "formspree" | "gsheet" | "generic"
-  sheetUrl: ""               // published Google Sheet CSV for magnets (blank = use MAGNETS below)
+  // Published Google Sheet CSV. Once set, NEW magnets are just rows — no code, no redeploy.
+  // Columns: slug, menu_title, menu_desc, kicker, title, title_accent, author, intro,
+  //          box_label, content, guide_md, download_url
+  //   content   = a copy-paste prompt (shows in the dark copy box)
+  //   guide_md  = a full written guide in Markdown (renders inline on the page)
+  //   download_url = a file/link (shows an "Open" button)
+  sheetUrl: ""
 };
 
 const PROFILE = {
@@ -417,6 +423,16 @@ let MAP={},ORDER=[],activeSlug=null;
 function isSub(){ try{ return localStorage.getItem('hk_sub')==='1'; }catch(e){ return false; } }
 function setSub(){ try{ localStorage.setItem('hk_sub','1'); }catch(e){} }
 
+let _marked=null;
+async function renderMarkdown(md){
+  if(typeof window.marked==='undefined'){
+    try{ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js'); }catch(e){}
+  }
+  if(typeof window.marked!=='undefined'){ return window.marked.parse(md); }
+  // fallback: escape + minimal formatting if the library can't load
+  const esc=md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return '<pre style="white-space:pre-wrap">'+esc+'</pre>';
+}
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
 async function loadMagnets(){
   MAP={};ORDER=[]; MAGNETS.forEach(m=>{MAP[m.slug]=m;ORDER.push(m.slug);});
@@ -430,7 +446,8 @@ async function loadMagnets(){
       const obj={ slug:s, menu_title:r.menu_title||r.title||s, menu_desc:r.menu_desc||"", kicker:r.kicker||"",
         title:r.title||"", titleAccent:r.title_accent||r.titleAccent||"", author:r.author||PROFILE.handle,
         intro:r.intro||r.subtitle||"", boxLabel:r.box_label||r.boxLabel||"Copy this",
-        content:r.content||"", downloadUrl:r.download_url||r.downloadUrl||"", article:r.article||"" };
+        content:r.content||"", downloadUrl:r.download_url||r.downloadUrl||"",
+        article:r.article||"", guideMd:r.guide_md||r.guideMd||r.markdown||"" };
       if(!MAP[s]) ORDER.push(s);
       MAP[s]=obj;
     });
@@ -492,15 +509,20 @@ function renderMagnet(m){
   if(isSub()){ deliver(m); }   // already subscribed — open straight to the content
 }
 
-function deliver(m){
+async function deliver(m){
   $('r-title').textContent=m.menu_title||m.title||"Your guide";
   const hasArticle=!!(m.article&&m.article.trim());
-  const hasContent=!hasArticle && !!(m.content&&m.content.trim());
-  const hasFile=!hasArticle && !!(m.downloadUrl&&m.downloadUrl.trim());
+  const hasGuide=!hasArticle && !!(m.guideMd&&m.guideMd.trim());
+  const hasContent=!hasArticle && !hasGuide && !!(m.content&&m.content.trim());
+  const hasFile=!hasArticle && !hasGuide && !!(m.downloadUrl&&m.downloadUrl.trim());
   const box=$('box'); const art=$('article');
-  if(hasArticle){ art.innerHTML=m.article; art.style.display=''; box.style.display='none'; }
-  else { art.style.display='none'; art.innerHTML=''; }
-  if(hasArticle){ $('fileArea').innerHTML=''; $('pitch').style.display='none'; $('reveal').classList.add('show'); return; }
+  if(hasArticle||hasGuide){
+    art.innerHTML = hasArticle ? m.article : '<p class="muted">Loading…</p>';
+    art.style.display=''; box.style.display='none';
+    $('fileArea').innerHTML=''; $('pitch').style.display='none'; $('reveal').classList.add('show');
+    if(hasGuide){ art.innerHTML = await renderMarkdown(m.guideMd); }
+    return;
+  } else { art.style.display='none'; art.innerHTML=''; }
   if(hasContent||(!hasContent&&!hasFile)){
     box.style.display='';
     if(hasContent){ $('glabel').textContent=m.boxLabel||"Copy this"; $('gbody').textContent=m.content; }
