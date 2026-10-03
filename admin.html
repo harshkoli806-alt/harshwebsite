@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{--maroon:#7a1e2d;--maroon-deep:#5c1622;--ink:#221a1c;--bg:#f3eee6;--line:#d8cfc0;--muted:#6f625f;--ok:#2f6b3f;--radius:12px}
   *{box-sizing:border-box}html,body{margin:0}
@@ -41,6 +42,14 @@
   .hidden{display:none!important}
   a{color:var(--maroon)}
   code{background:#efe7db;padding:1px 6px;border-radius:5px;font-size:.85em}
+  .manage h2{font-family:"Space Mono",monospace;font-size:1.1rem;margin:30px 0 4px}
+  .glist{list-style:none;margin:10px 0 0;padding:0}
+  .glist li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;margin-bottom:10px}
+  .glist .gt{font-weight:600;font-size:.95rem}
+  .glist .gs{color:var(--muted);font-size:.8rem;font-family:ui-monospace,monospace}
+  .del{font:inherit;font-weight:600;font-size:.82rem;color:#b5482f;background:#fff;border:1.5px solid #e4c3bb;border-radius:9px;padding:8px 14px;cursor:pointer}
+  .del:hover{background:#fbece9}
+  .muted2{color:var(--muted);font-size:.9rem}
 </style>
 </head>
 <body>
@@ -114,6 +123,12 @@
 
     <button class="btn" id="publish">Publish to site</button>
     <p class="msg" id="msg"></p>
+
+    <div class="manage">
+      <h2>Your guides</h2>
+      <p class="muted2" id="manageNote">Loading your published guides…</p>
+      <ul class="glist" id="glist"></ul>
+    </div>
   </div>
 
 <script>
@@ -127,7 +142,7 @@ let KEY="", TYPE="prompt", imgData="";
 
 // gate
 $('enter').onclick=()=>{ const v=$('pw').value.trim(); if(!v){ $('gateMsg').textContent="Enter your password."; return; }
-  KEY=v; $('gate').classList.add('hidden'); $('app').classList.remove('hidden'); };
+  KEY=v; $('gate').classList.add('hidden'); $('app').classList.remove('hidden'); loadGuides(); };
 $('pw').addEventListener('keydown',e=>{ if(e.key==='Enter') $('enter').click(); });
 
 // type switch
@@ -174,12 +189,40 @@ $('publish').onclick=async ()=>{
       try{ const t=await fetch(CSV_URL+(CSV_URL.includes('?')?'&':'?')+'t='+Date.now()).then(r=>r.text()); if(t.indexOf(slug)>-1) seen=true; }catch(e){}
     }
     $('publish').disabled=false;
-    if(seen){ msg('Live ✓  Your guide is on the site now.','ok'); resetForm(); }
-    else { msg('Sent ✓ Importing from Notion can take a few seconds — refresh your site shortly.','ok'); resetForm(); }
+    if(seen){ msg('Live ✓  Your guide is on the site now.','ok'); resetForm(); loadGuides(); }
+    else { msg('Sent ✓ Importing from Notion can take a few seconds — refresh your site shortly.','ok'); resetForm(); setTimeout(loadGuides,2500); }
   } else {
     $('publish').disabled=false; msg('Sent ✓  It will appear on your site in a few seconds.','ok'); resetForm();
   }
 };
+async function loadGuides(){
+  const note=$('manageNote'), list=$('glist'); list.innerHTML='';
+  if(!CSV_URL){ note.textContent='Connect the Magnets sheet to manage guides here.'; return; }
+  try{
+    const csv=await fetch(CSV_URL+(CSV_URL.includes('?')?'&':'?')+'t='+Date.now()).then(r=>r.text());
+    const rows=Papa.parse(csv,{header:true,skipEmptyLines:true}).data.filter(r=>r.slug);
+    if(!rows.length){ note.textContent='No guides published from the sheet yet.'; return; }
+    note.textContent='Click delete to remove a guide from your site.';
+    rows.forEach(r=>{
+      const li=document.createElement('li');
+      li.innerHTML='<span><span class="gt"></span><br><span class="gs"></span></span>';
+      li.querySelector('.gt').textContent=r.menu_title||r.slug;
+      li.querySelector('.gs').textContent='/'+r.slug;
+      const b=document.createElement('button'); b.className='del'; b.textContent='Delete';
+      b.onclick=()=>deleteGuide(r.slug, r.menu_title||r.slug, li);
+      li.appendChild(b); list.appendChild(li);
+    });
+  }catch(e){ note.textContent='Could not load the guide list.'; }
+}
+async function deleteGuide(slug, title, li){
+  if(!confirm('Delete "'+title+'"? This removes it from your site.')) return;
+  li.style.opacity='.5';
+  try{
+    await fetch(EXEC_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({type:'delete',key:KEY,slug:slug})});
+    setTimeout(loadGuides, 1500);
+  }catch(e){ li.style.opacity='1'; alert('Could not delete — try again.'); }
+}
 function msg(t,cls){ const m=$('msg'); m.textContent=t; m.className='msg '+(cls||''); }
 function resetForm(){ ['title','kicker','accent','desc','intro','content','guide_md','download','notion_url'].forEach(id=>{ if($(id)) $(id).value=''; });
   imgData=''; $('preview').style.display='none'; $('dropPh').textContent='Tap to attach a cover, or drag one here'; }
