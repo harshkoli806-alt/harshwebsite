@@ -114,11 +114,6 @@
   .socials a:hover{border-color:var(--maroon);color:var(--maroon);transform:translateY(-2px);box-shadow:0 10px 22px -12px rgba(70,20,28,.5)}
   .socials svg{width:20px;height:20px}
   .socials.small a{width:36px;height:36px}.socials.small svg{width:17px;height:17px}
-  .socials-fixed{position:fixed;right:clamp(16px,3vw,28px);bottom:clamp(16px,3vw,28px);z-index:6;display:flex;gap:10px}
-  .socials-fixed a{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:rgba(255,255,255,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .15s}
-  .socials-fixed a:hover{border-color:var(--maroon);color:var(--maroon);transform:translateY(-2px)}
-  .socials-fixed svg{width:18px;height:18px}
-  @media (max-width:520px){.socials-fixed a{width:34px;height:34px}.socials-fixed svg{width:16px;height:16px}}
 
   .value{max-width:1040px;margin:0 auto;padding:54px clamp(20px,5vw,28px) 0}
   .value .eyebrow{display:block;text-align:left;margin-bottom:20px}
@@ -154,8 +149,19 @@
   .mg-title{font-family:"Space Mono",ui-monospace,monospace;font-weight:700;font-size:1.05rem;margin:0 0 4px;color:var(--ink)}
   .mg-sub{color:var(--muted);font-size:.95rem;margin:0 0 16px}
   .more-gate .sub-pill{margin:0 auto}
-  .site-foot{max-width:1040px;margin:56px auto 0;padding:30px clamp(20px,5vw,28px) 48px;border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
-  .foot-handle{font-family:"Space Mono",monospace;font-size:.8rem;letter-spacing:.06em;color:var(--maroon)}
+  .site-foot{max-width:1040px;margin:64px auto 0;padding:34px clamp(20px,5vw,28px) 48px;border-top:1px solid var(--line)}
+  .foot-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .foot-mark{font-family:"Space Mono",monospace;font-weight:700;font-size:1.15rem;letter-spacing:.04em;color:var(--ink)}
+  .foot-right{display:flex;flex-direction:column;align-items:flex-end;gap:18px}
+  .foot-socials{display:flex;gap:12px}
+  .foot-socials a{width:46px;height:46px;border-radius:13px;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink);transition:all .15s}
+  .foot-socials a:hover{border-color:var(--maroon);color:var(--maroon);transform:translateY(-2px)}
+  .foot-socials svg{width:20px;height:20px}
+  .foot-nav{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+  .foot-nav a{font-family:"Space Mono",ui-monospace,monospace;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-decoration:none}
+  .foot-nav a:hover{color:var(--maroon)}
+  .copy{display:block;margin-top:26px;font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;color:#9b8f89}
+  @media (max-width:560px){.foot-right{align-items:flex-start}.foot-nav{align-items:flex-start}}
   .copy{font-size:.78rem;color:#9b8f89}
 
   /* ---------- MAGNET PAGE ---------- */
@@ -247,7 +253,6 @@
     <div class="noise"></div>
     <div class="vignette"></div>
   </div>
-  <div class="socials-fixed" id="socials-fixed" aria-label="Social links"></div>
   <div class="boot" id="boot">Loading…</div>
 
   <!-- HOME (newsletter hub) -->
@@ -288,7 +293,16 @@
     </div>
 
     <footer class="site-foot">
-      <span class="foot-handle" id="foot-handle"></span>
+      <div class="foot-top">
+        <span class="foot-mark" id="foot-mark"></span>
+        <div class="foot-right">
+          <div class="foot-socials" id="foot-socials" aria-label="Social links"></div>
+          <nav class="foot-nav">
+            <a href="#guides-anchor" data-scroll>Guides</a>
+            <a href="#top" data-scroll>Subscribe</a>
+          </nav>
+        </div>
+      </div>
       <span class="copy" id="copy"></span>
     </footer>
   </section>
@@ -439,8 +453,9 @@ function renderHome(){
   $('home-lead').textContent=PROFILE.headLead;
   $('home-acc').textContent=PROFILE.headAccent;
   $('home-sub').textContent=PROFILE.sub;
-  $('foot-handle').textContent=PROFILE.handle;
-  $('copy').textContent='© '+new Date().getFullYear()+' '+PROFILE.name;
+  $('foot-mark').textContent=PROFILE.handle;
+  $('foot-socials').innerHTML=socialHTML();
+  $('copy').textContent='© '+new Date().getFullYear()+' '+PROFILE.name+'. All rights reserved.';
   const menu=$('menu'); menu.innerHTML='';
   ORDER.forEach((slug,i)=>{
     const m=MAP[slug]; const li=document.createElement('li'); li.className='menu-row';
@@ -559,8 +574,15 @@ document.addEventListener('click',e=>{
   const h=e.target.closest('a[data-home]'); if(h){ e.preventDefault(); go(''); }
 });
 window.addEventListener('popstate',route);
+document.addEventListener('click',e=>{
+  const sc=e.target.closest('a[data-scroll]'); if(!sc) return;
+  e.preventDefault();
+  const href=sc.getAttribute('href');
+  if(href==='#top'){ window.scrollTo({top:0,behavior:'smooth'}); return; }
+  const el=document.querySelector(href); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+});
 (async function init(){ try{ await loadMagnets(); }catch(e){ MAP={};ORDER=[];MAGNETS.forEach(m=>{MAP[m.slug]=m;ORDER.push(m.slug);}); }
-  $('boot').classList.add('hidden'); const _sf=$('socials-fixed'); if(_sf)_sf.innerHTML=socialHTML(); route(); })();
+  $('boot').classList.add('hidden'); route(); })();
 
 /* ---------- subscribe (home) ---------- */
 $('subscribe').addEventListener('submit',async(e)=>{
