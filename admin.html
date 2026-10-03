@@ -49,6 +49,11 @@
   .glist .gs{color:var(--muted);font-size:.8rem;font-family:ui-monospace,monospace}
   .del{font:inherit;font-weight:600;font-size:.82rem;color:#b5482f;background:#fff;border:1.5px solid #e4c3bb;border-radius:9px;padding:8px 14px;cursor:pointer}
   .del:hover{background:#fbece9}
+  .g-actions{display:flex;gap:8px}
+  .edit{font:inherit;font-weight:600;font-size:.82rem;color:var(--maroon);background:#fff;border:1.5px solid var(--line);border-radius:9px;padding:8px 14px;cursor:pointer}
+  .edit:hover{border-color:var(--maroon)}
+  .editnote{font-size:.9rem;color:var(--muted);margin:0 0 10px}
+  .editnote a{color:var(--maroon)}
   .muted2{color:var(--muted);font-size:.9rem}
 </style>
 </head>
@@ -121,6 +126,7 @@
       <div class="preview" id="preview"><img id="previewImg" alt="cover preview" /></div>
     </div>
 
+    <p class="editnote hidden" id="editNote"></p>
     <button class="btn" id="publish">Publish to site</button>
     <p class="msg" id="msg"></p>
 
@@ -139,6 +145,7 @@ const CSV_URL  = "https://docs.google.com/spreadsheets/d/1dPEDlUyCQlmHDq-GhsjZZO
 
 const $=(id)=>document.getElementById(id);
 let KEY="", TYPE="prompt", imgData="";
+let EDIT_SLUG="", EDIT_IMAGE="", GUIDES=[];
 
 // gate
 $('enter').onclick=()=>{ const v=$('pw').value.trim(); if(!v){ $('gateMsg').textContent="Enter your password."; return; }
@@ -146,11 +153,7 @@ $('enter').onclick=()=>{ const v=$('pw').value.trim(); if(!v){ $('gateMsg').text
 $('pw').addEventListener('keydown',e=>{ if(e.key==='Enter') $('enter').click(); });
 
 // type switch
-$('typeSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
-  [...$('typeSeg').children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); TYPE=b.dataset.type;
-  $('f_prompt').classList.toggle('hidden',TYPE!=='prompt');
-  $('f_guide').classList.toggle('hidden',TYPE!=='guide');
-  $('f_link').classList.toggle('hidden',TYPE!=='link'); });
+$('typeSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return; setType(b.dataset.type); });
 
 // cover upload
 $('drop').onclick=()=>$('file').click();
@@ -166,7 +169,7 @@ function slugify(s){ return s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').re
 $('publish').onclick=async ()=>{
   const title=$('title').value.trim();
   if(!title){ msg('Add a title first.','err'); return; }
-  const slug=slugify(title) || ('guide-'+Date.now());
+  const slug = EDIT_SLUG || slugify(title) || ('guide-'+Date.now());
   const payload={ type:'magnet', key:KEY, slug,
     menu_title:title, menu_desc:$('desc').value.trim(), kicker:$('kicker').value.trim()||'The Guide',
     title:title, title_accent:$('accent').value.trim(), author:'@harshhh__ai',
@@ -176,6 +179,7 @@ $('publish').onclick=async ()=>{
     notion_url: TYPE==='guide'?$('notion_url').value.trim():'',
     download_url: TYPE==='link'?$('download').value.trim():'',
     imageBase64: imgData||'' };
+  if(EDIT_SLUG){ payload.edit_slug=EDIT_SLUG; if(!imgData && EDIT_IMAGE) payload.image_keep=EDIT_IMAGE; }
 
   $('publish').disabled=true; msg('Publishing…','');
   try{
@@ -189,28 +193,63 @@ $('publish').onclick=async ()=>{
       try{ const t=await fetch(CSV_URL+(CSV_URL.includes('?')?'&':'?')+'t='+Date.now()).then(r=>r.text()); if(t.indexOf(slug)>-1) seen=true; }catch(e){}
     }
     $('publish').disabled=false;
-    if(seen){ msg('Live ✓  Your guide is on the site now.','ok'); resetForm(); loadGuides(); }
-    else { msg('Sent ✓ Importing from Notion can take a few seconds — refresh your site shortly.','ok'); resetForm(); setTimeout(loadGuides,2500); }
+    if(seen){ msg(EDIT_SLUG?'Updated ✓  Changes are live.':'Live ✓  Your guide is on the site now.','ok'); cancelEdit(); loadGuides(); }
+    else { msg('Sent ✓ Importing can take a few seconds — refresh your site shortly.','ok'); cancelEdit(); setTimeout(loadGuides,2500); }
   } else {
     $('publish').disabled=false; msg('Sent ✓  It will appear on your site in a few seconds.','ok'); resetForm();
   }
 };
+function setType(t){
+  TYPE=t;
+  [...$('typeSeg').children].forEach(x=>x.classList.toggle('on', x.dataset.type===t));
+  $('f_prompt').classList.toggle('hidden',t!=='prompt');
+  $('f_guide').classList.toggle('hidden',t!=='guide');
+  $('f_link').classList.toggle('hidden',t!=='link');
+}
+function editGuide(r){
+  EDIT_SLUG=r.slug; EDIT_IMAGE=r.image||r.image_url||'';
+  $('title').value=r.menu_title||r.title||'';
+  $('kicker').value=r.kicker||'';
+  $('accent').value=r.title_accent||r.titleAccent||'';
+  $('desc').value=r.menu_desc||'';
+  $('intro').value=r.intro||'';
+  const md=r.guide_md||r.guideMd||r.markdown||'';
+  const content=r.content||''; const dl=r.download_url||r.downloadUrl||'';
+  if(content){ setType('prompt'); $('content').value=content; }
+  else if(dl){ setType('link'); $('download').value=dl; }
+  else { setType('guide'); $('guide_md').value=md; $('notion_url').value=''; }
+  imgData='';
+  if(EDIT_IMAGE){ $('previewImg').src=EDIT_IMAGE; $('preview').style.display='block'; $('dropPh').textContent='Current cover (attach a new one to replace)'; }
+  else { $('preview').style.display='none'; $('dropPh').textContent='Tap to attach a cover, or drag one here'; }
+  $('publish').textContent='Update guide';
+  $('editNote').classList.remove('hidden');
+  $('editNote').innerHTML='Editing <b>'+(r.menu_title||r.slug)+'</b> — <a href="#" id="cancelEdit">cancel</a>';
+  $('cancelEdit').onclick=(ev)=>{ ev.preventDefault(); cancelEdit(); };
+  window.scrollTo({top:0,behavior:'smooth'});
+  msg('','');
+}
+function cancelEdit(){ EDIT_SLUG=''; EDIT_IMAGE=''; resetForm(); $('publish').textContent='Publish to site'; $('editNote').classList.add('hidden'); }
 async function loadGuides(){
   const note=$('manageNote'), list=$('glist'); list.innerHTML='';
   if(!CSV_URL){ note.textContent='Connect the Magnets sheet to manage guides here.'; return; }
   try{
     const csv=await fetch(CSV_URL+(CSV_URL.includes('?')?'&':'?')+'t='+Date.now()).then(r=>r.text());
     const rows=Papa.parse(csv,{header:true,skipEmptyLines:true}).data.filter(r=>r.slug);
+    GUIDES=rows;
     if(!rows.length){ note.textContent='No guides published from the sheet yet.'; return; }
-    note.textContent='Click delete to remove a guide from your site.';
+    note.textContent='Edit to change a guide, or delete to remove it.';
     rows.forEach(r=>{
       const li=document.createElement('li');
       li.innerHTML='<span><span class="gt"></span><br><span class="gs"></span></span>';
       li.querySelector('.gt').textContent=r.menu_title||r.slug;
       li.querySelector('.gs').textContent='/'+r.slug;
+      const actions=document.createElement('span'); actions.className='g-actions';
+      const e=document.createElement('button'); e.className='edit'; e.textContent='Edit';
+      e.onclick=()=>editGuide(r);
       const b=document.createElement('button'); b.className='del'; b.textContent='Delete';
       b.onclick=()=>deleteGuide(r.slug, r.menu_title||r.slug, li);
-      li.appendChild(b); list.appendChild(li);
+      actions.appendChild(e); actions.appendChild(b);
+      li.appendChild(actions); list.appendChild(li);
     });
   }catch(e){ note.textContent='Could not load the guide list.'; }
 }
