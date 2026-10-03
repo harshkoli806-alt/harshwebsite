@@ -153,7 +153,7 @@
 
   /* ---------- MAGNET PAGE ---------- */
   #magnet{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;
-    max-width:600px;margin:0 auto;padding:clamp(40px,7vh,80px) clamp(20px,5vw,32px);align-items:center;text-align:center}
+    max-width:720px;margin:0 auto;padding:clamp(40px,7vh,80px) clamp(20px,5vw,32px);align-items:center;text-align:center}
   .mag-card{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
   .topslot{width:100%;margin-bottom:18px;text-align:left}
   .back{display:inline-block;font-size:.85rem;font-weight:500;color:var(--muted);text-decoration:none}
@@ -180,12 +180,30 @@
   #magnet button.cta{width:100%}
   .fineprint{font-size:.82rem;color:#9b8f89;margin-top:4px}
 
-  .reveal{display:none;width:100%;max-width:560px;margin:0 auto;text-align:center}
+  .reveal{display:none;width:100%;max-width:680px;margin:0 auto;text-align:center}
   .reveal.show{display:block;animation:rise .55s ease both}
   @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
   .r-eyebrow{display:inline-flex;align-items:center;gap:7px;font-family:"Space Mono",monospace;font-size:.72rem;font-weight:700;
     letter-spacing:.16em;text-transform:uppercase;color:var(--ok);background:rgba(47,107,63,.1);
     border:1px solid rgba(47,107,63,.22);padding:6px 13px;border-radius:999px}
+  
+  /* inline article (rendered guide, no redirect) */
+  .article{display:none;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:18px;
+    padding:clamp(22px,4vw,40px);box-shadow:0 20px 50px -30px rgba(70,20,28,.4);color:var(--ink)}
+  .article .lead{font-size:1.06rem;color:var(--muted);line-height:1.65;margin:0 0 6px}
+  .article h3{font-family:"Space Mono",ui-monospace,monospace;font-weight:700;font-size:1.08rem;letter-spacing:-.01em;
+    color:var(--ink);margin:30px 0 10px;padding-top:18px;border-top:1px solid var(--line)}
+  .article h3:first-of-type{border-top:none;padding-top:0;margin-top:18px}
+  .article p{font-size:1rem;line-height:1.7;margin:0 0 14px;color:#3a2f30}
+  .article p.muted{font-size:.88rem;color:var(--muted)}
+  .article a{color:var(--maroon);text-decoration:underline;text-underline-offset:2px}
+  .article ul{margin:4px 0 6px;padding-left:20px}
+  .article li{font-size:1rem;line-height:1.65;margin-bottom:12px;color:#3a2f30}
+  .article li strong{color:var(--ink)}
+  .article pre{background:var(--dark);border-radius:12px;padding:16px 18px;overflow:auto;margin:0 0 16px}
+  .article pre code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86rem;line-height:1.6;color:#e3d7d2;white-space:pre}
+  .article pre::-webkit-scrollbar{height:8px}.article pre::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+  
   .r-title{font-family:"Space Mono",ui-monospace,monospace;font-weight:700;font-size:clamp(1.35rem,3.6vw,1.8rem);letter-spacing:-.01em;margin:.55em 0 22px;color:var(--ink)}
   .box{position:relative;text-align:left;background:var(--dark);border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.06);box-shadow:0 30px 70px -34px rgba(40,10,16,.6)}
   .box::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--maroon),#c06478)}
@@ -287,6 +305,7 @@
           </div>
           <div class="gbody" id="gbody"></div>
         </div>
+        <article class="article" id="article"></article>
         <div id="fileArea"></div>
         <p class="done">It's on its way to your inbox too, so you've always got it.</p>
       </div>
@@ -376,9 +395,11 @@ Do one slide at a time. Show me a still preview, wait for my yes, then wire the 
 
   { slug:"website-stack", menu_title:"The $10K Website Stack", menu_desc:"The 4-tool stack I use to build a $10K-looking site in minutes.",
     kicker:"The Guide", title:"Build a $10K-looking website", titleAccent:"in minutes.", author:"@harshhh__ai",
-    intro:"Enter your email and I'll open up the exact four-tool stack I use to put together a site that looks like it cost a fortune, start to finish.",
-    boxLabel:"", content:"",
-    downloadUrl:"https://tinyurl.com/58xw67cr" }
+    intro:"Enter your email and the full guide opens right here on the page, every step of the four-tool stack I use to put together a site that looks like it cost a fortune.",
+    boxLabel:"", content:"", downloadUrl:"",
+    article:`<p class="lead">Four pieces, and Claude builds a premium site in a couple of minutes: Claude Code as the builder, the UI/UX Pro Max skill for clean modern layouts, a hero section pulled from 21st.dev, and Framer Motion so every section animates itself. Here is each step and how they fit together.</p><h3>Step 1 — Install Claude Code</h3><p>Claude Code is the terminal agent that builds the site. Install it and open your project:</p><pre><code>npm install -g @anthropic-ai/claude-code</code></pre><p>A modern base helps, so a Next.js + Tailwind app is a clean starting point:</p><pre><code>npx create-next-app@latest my-site --typescript --tailwind
+cd my-site</code></pre><h3>Step 2 — Add the UI/UX Pro Max skill</h3><p>This is what makes Claude build clean, modern layouts automatically instead of the generic AI look, because it is a design-intelligence skill with styles, palettes, type scales, and spacing systems baked in, so Claude locks a real design system before it writes a line.</p><pre><code>/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
+/plugin install ui-ux-pro-max@ui-ux-pro-max-skill</code></pre><p class="muted">Repo: <a href="https://github.com/nextlevelbuilder/ui-ux-pro-max-skill" target="_blank" rel="noopener">github.com/nextlevelbuilder/ui-ux-pro-max-skill</a></p><h3>Step 3 — Pull a hero section from 21st.dev</h3><p><a href="https://21st.dev" target="_blank" rel="noopener">21st.dev</a> is a library of polished, copy-paste React/Tailwind UI components, made by the community in the shadcn/ui style. Browse it, find a hero section you like, copy it, and paste it straight into your project, which gives Claude a strong real starting point for the most important part of the page instead of generating one from scratch.</p><h3>Step 4 — Add Framer Motion</h3><p>Drop in Framer Motion and every section animates with smooth entrances, scroll reveals, and hover states, which is a big part of what separates a cheap-looking site from a premium one.</p><pre><code>npm install framer-motion</code></pre><h3>Lock your colors before you build</h3><p>The fastest upgrade is giving Claude your real brand colors as hex codes and fonts before it generates anything, then telling the UI/UX skill to apply them everywhere, because a premium look is a cohesive one and cohesion starts with the palette rather than the components.</p><h3>Use 21st.dev for the hero, Claude for the rest</h3><p>The hero is the section people judge first, so pulling a proven one from 21st.dev is the highest-leverage paste, and then you let Claude build the rest of the page against the design system so it stays consistent rather than pasting a dozen mismatched components from different sources.</p><h3>Do not over-animate</h3><p>Framer Motion makes it easy to animate everything, which is exactly what makes a site feel busy and cheap, so use motion on one or two deliberate moments per section, keep transitions quick, and let most of the page sit still so the animation that is there actually lands.</p><h3>Bring real content</h3><p>A beautiful layout wrapped around placeholder text still reads as a template, so feed Claude your actual headline, copy, and images, because the design is only as premium as what it is wrapped around and real content is what makes it look like a finished client site rather than a demo.</p><h3>The honest read</h3><ul><li><strong>"One line, two minutes" is the build, not the finished site.</strong> You genuinely get an impressive premium-looking draft fast, and then a refinement pass for content and responsiveness at every breakpoint is still yours, so budget a little polish time rather than shipping the raw first output.</li><li><strong>"Replaces a $10K agency" is the execution, not the whole job.</strong> It collapses the design-and-build time while an agency still owns strategy, brand, and the custom work, so treat it as the thing that gets you to a great-looking site fast and bring your own judgment on the rest.</li><li><strong>Check what is free.</strong> Claude Code runs on your usage, the UI/UX skill is free, Framer Motion is free and open source, and 21st.dev has free components alongside some premium ones, so you can build the whole thing at little cost though not literally zero.</li></ul>` }
 ];
 /* ==================================================== */
 
@@ -409,7 +430,7 @@ async function loadMagnets(){
       const obj={ slug:s, menu_title:r.menu_title||r.title||s, menu_desc:r.menu_desc||"", kicker:r.kicker||"",
         title:r.title||"", titleAccent:r.title_accent||r.titleAccent||"", author:r.author||PROFILE.handle,
         intro:r.intro||r.subtitle||"", boxLabel:r.box_label||r.boxLabel||"Copy this",
-        content:r.content||"", downloadUrl:r.download_url||r.downloadUrl||"" };
+        content:r.content||"", downloadUrl:r.download_url||r.downloadUrl||"", article:r.article||"" };
       if(!MAP[s]) ORDER.push(s);
       MAP[s]=obj;
     });
@@ -472,10 +493,14 @@ function renderMagnet(m){
 }
 
 function deliver(m){
-  $('r-title').textContent=m.menu_title||m.title||"Your prompt";
-  const hasContent=!!(m.content&&m.content.trim());
-  const hasFile=!!(m.downloadUrl&&m.downloadUrl.trim());
-  const box=$('box');
+  $('r-title').textContent=m.menu_title||m.title||"Your guide";
+  const hasArticle=!!(m.article&&m.article.trim());
+  const hasContent=!hasArticle && !!(m.content&&m.content.trim());
+  const hasFile=!hasArticle && !!(m.downloadUrl&&m.downloadUrl.trim());
+  const box=$('box'); const art=$('article');
+  if(hasArticle){ art.innerHTML=m.article; art.style.display=''; box.style.display='none'; }
+  else { art.style.display='none'; art.innerHTML=''; }
+  if(hasArticle){ $('fileArea').innerHTML=''; $('pitch').style.display='none'; $('reveal').classList.add('show'); return; }
   if(hasContent||(!hasContent&&!hasFile)){
     box.style.display='';
     if(hasContent){ $('glabel').textContent=m.boxLabel||"Copy this"; $('gbody').textContent=m.content; }
