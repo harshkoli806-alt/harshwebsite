@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Publish a guide — admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--maroon:#7a1e2d;--maroon-deep:#5c1622;--ink:#221a1c;--bg:#f3eee6;--line:#d8cfc0;--muted:#6f625f;--ok:#2f6b3f;--radius:12px}
+  *{box-sizing:border-box}html,body{margin:0}
+  body{font-family:"Inter",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:620px;margin:0 auto;padding:clamp(24px,5vw,52px) 20px 80px}
+  h1{font-family:"Space Mono",monospace;font-weight:700;font-size:1.5rem;letter-spacing:-.01em;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:.95rem;margin:0 0 26px}
+  .card{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:22px;margin-bottom:16px}
+  label{display:block;font-weight:600;font-size:.86rem;margin:0 0 6px}
+  .hint{font-weight:400;color:var(--muted);font-size:.8rem}
+  input[type=text],input[type=password],textarea,select{width:100%;font:inherit;font-size:1rem;color:var(--ink);
+    padding:12px 13px;border:1.5px solid var(--line);border-radius:var(--radius);background:#fff;margin-bottom:14px}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--maroon);box-shadow:0 0 0 3px rgba(122,30,45,.12)}
+  textarea{min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,monospace;font-size:.9rem;line-height:1.55}
+  .row{display:flex;gap:12px}.row>div{flex:1}
+  .seg{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .seg button{font:inherit;font-weight:600;font-size:.88rem;padding:9px 14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;cursor:pointer}
+  .seg button.on{background:var(--maroon);color:#fff;border-color:var(--maroon)}
+  .drop{border:1.8px dashed var(--line);border-radius:14px;padding:18px;text-align:center;cursor:pointer;background:#faf7f2;transition:border-color .15s}
+  .drop:hover{border-color:var(--maroon)}
+  .drop input{display:none}
+  .drop .ph{color:var(--muted);font-size:.9rem}
+  .preview{display:none;margin-top:12px;text-align:center}
+  .preview img{max-width:180px;border-radius:12px;border:1px solid var(--line)}
+  .btn{font:inherit;font-weight:700;font-size:1rem;color:#fff;background:var(--maroon);border:none;border-radius:var(--radius);
+    padding:15px 22px;width:100%;cursor:pointer;transition:background .15s}
+  .btn:hover{background:var(--maroon-deep)}.btn[disabled]{opacity:.6;cursor:default}
+  .msg{margin-top:14px;font-size:.92rem;min-height:1.2em}
+  .msg.ok{color:var(--ok)}.msg.err{color:#b5482f}
+  .gate{max-width:360px;margin:12vh auto 0;text-align:center}
+  .gate h1{margin-bottom:14px}
+  .hidden{display:none!important}
+  a{color:var(--maroon)}
+  code{background:#efe7db;padding:1px 6px;border-radius:5px;font-size:.85em}
+</style>
+</head>
+<body>
+  <!-- password gate -->
+  <div class="gate" id="gate">
+    <h1>Admin</h1>
+    <p class="sub">Enter your publish password to continue.</p>
+    <input type="password" id="pw" placeholder="Password" />
+    <button class="btn" id="enter">Enter</button>
+    <p class="msg err" id="gateMsg"></p>
+  </div>
+
+  <!-- publisher -->
+  <div class="wrap hidden" id="app">
+    <h1>Publish a guide</h1>
+    <p class="sub">Fill this in, attach a cover, and hit publish. It appears on your site within a few seconds — no code, no deploy.</p>
+
+    <div class="card">
+      <label>What are you giving away?</label>
+      <div class="seg" id="typeSeg">
+        <button data-type="prompt" class="on">A prompt (copy box)</button>
+        <button data-type="guide">A written guide</button>
+        <button data-type="link">A file / link</button>
+      </div>
+
+      <label>Title <span class="hint">— shows on the card and the page</span></label>
+      <input type="text" id="title" placeholder="e.g. The $10K Website Stack" />
+
+      <div class="row">
+        <div>
+          <label>Card label <span class="hint">(kicker)</span></label>
+          <input type="text" id="kicker" placeholder="The Guide" />
+        </div>
+        <div>
+          <label>Headline accent <span class="hint">(italic tail)</span></label>
+          <input type="text" id="accent" placeholder="in minutes." />
+        </div>
+      </div>
+
+      <label>Short description <span class="hint">— one line under the card title</span></label>
+      <input type="text" id="desc" placeholder="The 4-tool stack I use to build a premium site fast." />
+
+      <label>Intro line <span class="hint">— shown above the email box</span></label>
+      <input type="text" id="intro" placeholder="Enter your email and the full guide opens right here." />
+
+      <!-- content fields (one shows at a time) -->
+      <div id="f_prompt">
+        <label>The prompt <span class="hint">— people copy this</span></label>
+        <textarea id="content" placeholder="Paste the prompt here..."></textarea>
+      </div>
+      <div id="f_guide" class="hidden">
+        <label>The guide, in Markdown <span class="hint"># Heading, - bullet, ```code```</span></label>
+        <textarea id="guide_md" placeholder="# Step 1&#10;Do this...&#10;&#10;# Step 2&#10;Then this..."></textarea>
+      </div>
+      <div id="f_link" class="hidden">
+        <label>File or link URL</label>
+        <input type="text" id="download" placeholder="https://..." />
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Cover image <span class="hint">— portrait works best (optional)</span></label>
+      <div class="drop" id="drop">
+        <input type="file" id="file" accept="image/*" />
+        <span class="ph" id="dropPh">Tap to attach a cover, or drag one here</span>
+      </div>
+      <div class="preview" id="preview"><img id="previewImg" alt="cover preview" /></div>
+    </div>
+
+    <button class="btn" id="publish">Publish to site</button>
+    <p class="msg" id="msg"></p>
+  </div>
+
+<script>
+/* ===== set these two once (same values as your site) ===== */
+const EXEC_URL = "https://script.google.com/macros/s/AKfycbz-Q6jG7vBqwYOtYEwlOCZFRi6R0saatVf4_aViUdcySEt3topYQBiWEpx8SDQZ74Lh/exec";
+const CSV_URL  = ""; // published/shared Magnets-tab CSV — used only to confirm it went live
+/* ========================================================= */
+
+const $=(id)=>document.getElementById(id);
+let KEY="", TYPE="prompt", imgData="";
+
+// gate
+$('enter').onclick=()=>{ const v=$('pw').value.trim(); if(!v){ $('gateMsg').textContent="Enter your password."; return; }
+  KEY=v; $('gate').classList.add('hidden'); $('app').classList.remove('hidden'); };
+$('pw').addEventListener('keydown',e=>{ if(e.key==='Enter') $('enter').click(); });
+
+// type switch
+$('typeSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
+  [...$('typeSeg').children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); TYPE=b.dataset.type;
+  $('f_prompt').classList.toggle('hidden',TYPE!=='prompt');
+  $('f_guide').classList.toggle('hidden',TYPE!=='guide');
+  $('f_link').classList.toggle('hidden',TYPE!=='link'); });
+
+// cover upload
+$('drop').onclick=()=>$('file').click();
+$('file').onchange=e=>handleFile(e.target.files[0]);
+['dragover','dragenter'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();}));
+$('drop').addEventListener('drop',e=>{e.preventDefault(); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);});
+function handleFile(f){ if(!f)return; const r=new FileReader();
+  r.onload=()=>{ imgData=r.result; $('previewImg').src=imgData; $('preview').style.display='block'; $('dropPh').textContent=f.name; };
+  r.readAsDataURL(f); }
+
+function slugify(s){ return s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40); }
+
+$('publish').onclick=async ()=>{
+  const title=$('title').value.trim();
+  if(!title){ msg('Add a title first.','err'); return; }
+  const slug=slugify(title) || ('guide-'+Date.now());
+  const payload={ type:'magnet', key:KEY, slug,
+    menu_title:title, menu_desc:$('desc').value.trim(), kicker:$('kicker').value.trim()||'The Guide',
+    title:title, title_accent:$('accent').value.trim(), author:'@harshhh__ai',
+    intro:$('intro').value.trim(), box_label: TYPE==='prompt'?'Copy the prompt':'',
+    content: TYPE==='prompt'?$('content').value:'',
+    guide_md: TYPE==='guide'?$('guide_md').value:'',
+    download_url: TYPE==='link'?$('download').value.trim():'',
+    imageBase64: imgData||'' };
+
+  $('publish').disabled=true; msg('Publishing…','');
+  try{
+    await fetch(EXEC_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  }catch(e){ $('publish').disabled=false; msg('Could not reach the server — check your connection and try again.','err'); return; }
+
+  // confirm it landed (if CSV_URL is set)
+  if(CSV_URL){
+    let seen=false;
+    for(let i=0;i<6 && !seen;i++){ await new Promise(r=>setTimeout(r,1500));
+      try{ const t=await fetch(CSV_URL+(CSV_URL.includes('?')?'&':'?')+'t='+Date.now()).then(r=>r.text()); if(t.indexOf(slug)>-1) seen=true; }catch(e){}
+    }
+    $('publish').disabled=false;
+    if(seen){ msg('Live ✓  Your guide is on the site now.','ok'); resetForm(); }
+    else { msg('Sent. It should appear shortly — refresh your site in a moment.','ok'); resetForm(); }
+  } else {
+    $('publish').disabled=false; msg('Sent ✓  It will appear on your site in a few seconds.','ok'); resetForm();
+  }
+};
+function msg(t,cls){ const m=$('msg'); m.textContent=t; m.className='msg '+(cls||''); }
+function resetForm(){ ['title','kicker','accent','desc','intro','content','guide_md','download'].forEach(id=>{ if($(id)) $(id).value=''; });
+  imgData=''; $('preview').style.display='none'; $('dropPh').textContent='Tap to attach a cover, or drag one here'; }
+</script>
+</body>
+</html>
