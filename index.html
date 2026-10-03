@@ -147,6 +147,13 @@
   .m-read{margin-top:auto;font-weight:600;font-size:.92rem;color:var(--maroon)}
   .m-read .ar{display:inline-block;transition:transform .18s}
   .menu-row a:hover .m-read .ar{transform:translateX(4px)}
+  .menu-row.locked{display:none}
+  .more-gate{grid-column:1/-1;margin-top:8px;text-align:center;border:1.5px dashed var(--line);border-radius:18px;
+    padding:clamp(24px,4vw,34px);background:rgba(255,255,255,.5)}
+  .more-gate.hidden{display:none}
+  .mg-title{font-family:"Space Mono",ui-monospace,monospace;font-weight:700;font-size:1.05rem;margin:0 0 4px;color:var(--ink)}
+  .mg-sub{color:var(--muted);font-size:.95rem;margin:0 0 16px}
+  .more-gate .sub-pill{margin:0 auto}
   .site-foot{max-width:1040px;margin:56px auto 0;padding:30px clamp(20px,5vw,28px) 48px;border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
   .foot-handle{font-family:"Space Mono",monospace;font-size:.8rem;letter-spacing:.06em;color:var(--maroon)}
   .copy{font-size:.78rem;color:#9b8f89}
@@ -275,6 +282,7 @@
     <div class="guides-wrap" id="guides-anchor">
       <div class="guides-head"><h2>Start here</h2></div>
       <ol class="menu" id="menu"></ol>
+      <div class="more-gate hidden" id="moreGate"></div>
     </div>
 
     <footer class="site-foot">
@@ -440,9 +448,43 @@ function renderHome(){
     a.querySelector('.m-cat').textContent=(m.kicker||'Guide');
     a.querySelector('.m-title').textContent=m.menu_title;
     const b=a.querySelector('.m-blurb'); if(m.menu_desc){ b.textContent=m.menu_desc; } else { b.remove(); }
+    if(i >= VISIBLE_GUIDES) li.classList.add('locked');
     li.appendChild(a); menu.appendChild(li);
   });
-  if(isSub()){ $('subscribe').style.display='none'; $('sub-note').style.display='none'; $('sub-ok').classList.add('show'); }
+  buildMoreGate();
+  if(isSub()){ $('subscribe').style.display='none'; $('sub-note').style.display='none'; $('sub-ok').classList.add('show'); revealAllGuides(); }
+}
+
+const VISIBLE_GUIDES = 3;
+function hiddenCount(){ return Math.max(0, ORDER.length - VISIBLE_GUIDES); }
+function buildMoreGate(){
+  const gate=$('moreGate'); if(!gate) return;
+  const n=hiddenCount();
+  if(n<=0 || isSub()){ gate.classList.add('hidden'); return; }
+  gate.classList.remove('hidden');
+  gate.innerHTML =
+    '<p class="mg-title">'+n+' more guide'+(n>1?'s':'')+' inside</p>'+
+    '<p class="mg-sub">Drop your email to unlock the full library, free.</p>'+
+    '<form id="moreForm" class="sub-pill" novalidate>'+
+      '<input id="more-email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" required />'+
+      '<button type="submit" class="cta"><span class="label">Unlock all</span><span class="spin" aria-hidden="true"></span></button>'+
+    '</form>'+
+    '<p class="msg" id="more-msg" role="status" aria-live="polite"></p>';
+  $('moreForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const input=$('more-email'), btn=e.target.querySelector('button'), msg=$('more-msg');
+    msg.textContent=''; input.classList.remove('invalid');
+    const email=input.value.trim();
+    if(!validEmail(email)){ input.classList.add('invalid'); msg.textContent="That email doesn't look right — mind checking it?"; input.focus(); return; }
+    btn.classList.add('loading'); btn.disabled=true;
+    try{ await storeEmail(email,'newsletter'); setSub(); revealAllGuides();
+      $('subscribe').style.display='none'; $('sub-note').style.display='none'; $('sub-ok').classList.add('show');
+    }catch(err){ btn.classList.remove('loading'); btn.disabled=false; msg.textContent='Something went wrong — try again in a moment.'; }
+  });
+}
+function revealAllGuides(){
+  document.querySelectorAll('#menu .menu-row.locked').forEach(li=>li.classList.remove('locked'));
+  const gate=$('moreGate'); if(gate) gate.classList.add('hidden');
 }
 
 /* ---------- MAGNET render ---------- */
