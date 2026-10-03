@@ -187,6 +187,16 @@
     letter-spacing:.16em;text-transform:uppercase;color:var(--ok);background:rgba(47,107,63,.1);
     border:1px solid rgba(47,107,63,.22);padding:6px 13px;border-radius:999px}
   
+
+  /* magnet cover images / posters */
+  .m-img{display:block;margin:-26px -26px 18px;border-radius:18px 18px 0 0;overflow:hidden;aspect-ratio:4/5;background:#efece5}
+  .m-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .m-body{display:flex;flex-direction:column;align-items:flex-start;width:100%}
+  .pitch-hero{width:100%;max-width:300px;margin:26px auto 6px;border-radius:17px;overflow:hidden;box-shadow:var(--shadow)}
+  .pitch-hero img{width:100%;display:block}
+  .art-hero{margin:-4px auto 24px;border-radius:14px;overflow:hidden;border:1px solid var(--line);max-width:320px}
+  .art-hero img{width:100%;display:block}
+  
   /* inline article (rendered guide, no redirect) */
   .article{display:none;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:18px;
     padding:clamp(22px,4vw,40px);box-shadow:0 20px 50px -30px rgba(70,20,28,.4);color:var(--ink)}
@@ -285,6 +295,7 @@
           <span class="c-by" id="c-by"></span>
           <div class="tile"><span>h</span></div>
         </div>
+        <div class="pitch-hero" id="pitchHero" style="display:none"></div>
         <h1 class="mag-h1"><span id="h1lead"></span> <em class="accent" id="h1accent"></em></h1>
         <p class="intro" id="intro"></p>
         <form id="capture" novalidate>
@@ -348,6 +359,7 @@ const SOCIALS = [
 /* Sheet columns: slug, menu_title, menu_desc, kicker, title, title_accent, author, intro, box_label, content, download_url */
 const MAGNETS = [
   { slug:"carousel-prompt", menu_title:"Carousel Prompt", menu_desc:"The exact prompt I use to build my animated carousels.",
+    image:"",
     kicker:"The Prompt", title:"Write your next carousel", titleAccent:"in one paste.", author:"@harshhh__ai",
     intro:"Enter your email and you'll get the full prompt I hand Claude to build my animated carousels, so you can drop in a topic and a few references and have every slide rebuilt in your own brand, ready to turn into video.",
     boxLabel:"Copy the prompt",
@@ -400,6 +412,7 @@ Do one slide at a time. Show me a still preview, wait for my yes, then wire the 
     downloadUrl:"" },
 
   { slug:"website-stack", menu_title:"The $10K Website Stack", menu_desc:"The 4-tool stack I use to build a $10K-looking site in minutes.",
+    image:"/website-poster.svg",
     kicker:"The Guide", title:"Build a $10K-looking website", titleAccent:"in minutes.", author:"@harshhh__ai",
     intro:"Enter your email and the full guide opens right here on the page, every step of the four-tool stack I use to put together a site that looks like it cost a fortune.",
     boxLabel:"", content:"", downloadUrl:"",
@@ -443,7 +456,7 @@ async function loadMagnets(){
     const rows=Papa.parse(csv,{header:true,skipEmptyLines:true}).data;
     rows.forEach(r=>{
       if(!r.slug) return; const s=r.slug.trim();
-      const obj={ slug:s, menu_title:r.menu_title||r.title||s, menu_desc:r.menu_desc||"", kicker:r.kicker||"",
+      const obj={ slug:s, menu_title:r.menu_title||r.title||s, menu_desc:r.menu_desc||"", image:r.image||r.image_url||"", kicker:r.kicker||"",
         title:r.title||"", titleAccent:r.title_accent||r.titleAccent||"", author:r.author||PROFILE.handle,
         intro:r.intro||r.subtitle||"", boxLabel:r.box_label||r.boxLabel||"Copy this",
         content:r.content||"", downloadUrl:r.download_url||r.downloadUrl||"",
@@ -481,7 +494,8 @@ function renderHome(){
   ORDER.forEach((slug,i)=>{
     const m=MAP[slug]; const li=document.createElement('li'); li.className='menu-row';
     const a=document.createElement('a'); a.href='/'+slug; a.dataset.slug=slug;
-    a.innerHTML='<span class="m-cat"></span><span class="m-title"></span><span class="m-blurb"></span><span class="m-read">Read the guide <span class="ar">&rarr;</span></span>';
+    const imgHtml = m.image ? '<span class="m-img"><img src="'+m.image+'" alt="" loading="lazy"></span>' : '';
+    a.innerHTML=imgHtml+'<span class="m-body"><span class="m-cat"></span><span class="m-title"></span><span class="m-blurb"></span><span class="m-read">Read the guide <span class="ar">&rarr;</span></span></span>';
     a.querySelector('.m-cat').textContent=(m.kicker||'Guide');
     a.querySelector('.m-title').textContent=m.menu_title;
     const b=a.querySelector('.m-blurb'); if(m.menu_desc){ b.textContent=m.menu_desc; } else { b.remove(); }
@@ -494,6 +508,9 @@ function renderHome(){
 function renderMagnet(m){
   activeSlug=m.slug;
   $('topslot').innerHTML='<a class="back" href="/" data-home>&larr; All guides</a>';
+  const cover=document.querySelector('#pitch .cover'); const heroWrap=$('pitchHero');
+  if(m.image){ cover.style.display='none'; heroWrap.style.display='block'; heroWrap.innerHTML='<img src="'+m.image+'" alt="">'; }
+  else { cover.style.display='flex'; heroWrap.style.display='none'; heroWrap.innerHTML=''; }
   $('c-kicker').textContent=m.kicker||"Free download";
   $('c-title').textContent=m.title||"";
   $('c-by').textContent=m.author||PROFILE.handle;
@@ -516,11 +533,12 @@ async function deliver(m){
   const hasContent=!hasArticle && !hasGuide && !!(m.content&&m.content.trim());
   const hasFile=!hasArticle && !hasGuide && !!(m.downloadUrl&&m.downloadUrl.trim());
   const box=$('box'); const art=$('article');
+  const banner = m.image ? '<div class="art-hero"><img src="'+m.image+'" alt=""></div>' : '';
   if(hasArticle||hasGuide){
-    art.innerHTML = hasArticle ? m.article : '<p class="muted">Loading…</p>';
+    art.innerHTML = banner + (hasArticle ? m.article : '<p class="muted">Loading…</p>');
     art.style.display='block'; box.style.display='none';
     $('fileArea').innerHTML=''; $('pitch').style.display='none'; $('reveal').classList.add('show');
-    if(hasGuide){ art.innerHTML = await renderMarkdown(m.guideMd); }
+    if(hasGuide){ art.innerHTML = banner + await renderMarkdown(m.guideMd); }
     return;
   } else { art.style.display='none'; art.innerHTML=''; }
   if(hasContent||(!hasContent&&!hasFile)){
