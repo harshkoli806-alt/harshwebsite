@@ -270,6 +270,7 @@
   #magBody{position:relative;width:100%}
   #magBody.preview{-webkit-mask-image:linear-gradient(180deg,#000 66%,transparent 99%);mask-image:linear-gradient(180deg,#000 66%,transparent 99%)}
   #magBody.preview .copy-btn{display:none}
+  #magBody.preview .gbody{max-height:none;overflow:hidden}   /* no inner scroll while locked */
   .lock-gate{display:none;max-width:540px;margin:-54px auto 0;position:relative;z-index:3;text-align:center;
     border:1.5px solid var(--line);border-radius:22px;background:#fff;padding:clamp(26px,5vw,38px);box-shadow:var(--shadow)}
   .lock-gate.show{display:block;animation:rise .5s ease both}
