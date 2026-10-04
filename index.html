@@ -164,6 +164,25 @@
   @media (max-width:560px){.foot-right{align-items:flex-start}.foot-nav{align-items:flex-start}}
   .copy{font-size:.78rem;color:#9b8f89}
 
+  /* ---------- filters ---------- */
+  .filters{margin:0 0 28px}
+  .filters[hidden]{display:none}
+  .pills{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  .pill-btn{font-family:"Space Mono",ui-monospace,monospace;font-size:.8rem;font-weight:700;letter-spacing:.01em;
+    display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;border:1.5px solid var(--line);
+    background:#fff;color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+  .pill-btn:hover{border-color:var(--maroon)}
+  .pill-btn.active{background:var(--ink);border-color:var(--ink);color:#fff}
+  .pill-btn .cnt{font-size:.74rem;opacity:.5}
+  .pill-btn.active .cnt{opacity:.7}
+  .search-wrap{position:relative;max-width:430px}
+  .search-wrap svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:#a99e97;pointer-events:none}
+  .search-wrap input{width:100%;font:inherit;font-size:.98rem;color:var(--ink);padding:12px 16px 12px 42px;
+    border:1.5px solid var(--line);border-radius:999px;background:#fff;transition:border-color .15s,box-shadow .15s}
+  .search-wrap input::placeholder{color:#a99e97}
+  .search-wrap input:focus{outline:none;border-color:var(--maroon);box-shadow:0 0 0 4px rgba(122,30,45,.12)}
+  .no-match{grid-column:1/-1;text-align:center;color:var(--muted);padding:34px 0;font-size:.96rem}
+
   /* ---------- MAGNET PAGE ---------- */
   #magnet{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;justify-content:flex-start;
     max-width:860px;margin:0 auto;padding:clamp(40px,7vh,72px) clamp(18px,4vw,32px) 72px;align-items:center;text-align:center}
@@ -240,6 +259,20 @@
   .gbody::-webkit-scrollbar{width:9px}.gbody::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:9px}
   .dl{display:inline-flex;align-items:center;gap:9px;margin-top:16px;font-weight:600;text-decoration:none;color:#fff;background:var(--maroon);padding:14px 22px;border-radius:var(--radius)}
   .done{font-size:.84rem;color:#9b8f89;margin:16px 0 0}
+
+  /* ---------- preview + lock gate ---------- */
+  #magBody{position:relative;width:100%}
+  #magBody.preview{-webkit-mask-image:linear-gradient(180deg,#000 66%,transparent 99%);mask-image:linear-gradient(180deg,#000 66%,transparent 99%)}
+  #magBody.preview .copy-btn{display:none}
+  .lock-gate{display:none;max-width:540px;margin:-54px auto 0;position:relative;z-index:3;text-align:center;
+    border:1.5px solid var(--line);border-radius:22px;background:#fff;padding:clamp(26px,5vw,38px);box-shadow:var(--shadow)}
+  .lock-gate.show{display:block;animation:rise .5s ease both}
+  .lg-ic{width:56px;height:56px;border-radius:15px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;color:var(--ink)}
+  .lg-ic svg{width:24px;height:24px}
+  .lg-title{font-family:"Space Mono",ui-monospace,monospace;font-weight:700;font-size:1.22rem;line-height:1.2;margin:0 0 8px;color:var(--ink)}
+  .lg-sub{color:var(--muted);font-size:1rem;line-height:1.55;max-width:40ch;margin:0 auto 20px}
+  .lock-gate .sub-pill{margin:0 auto}
+  .lock-gate .msg{text-align:center}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
   <!-- Vercel Web Analytics (enable it in your Vercel project → Analytics) -->
@@ -288,6 +321,13 @@
 
     <div class="guides-wrap" id="guides-anchor">
       <div class="guides-head"><h2>Start here</h2></div>
+      <div class="filters" id="filters" hidden>
+        <div class="pills" id="pills" role="tablist" aria-label="Filter by category"></div>
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="search" type="search" placeholder="Search resources" aria-label="Search guides" autocomplete="off" />
+        </div>
+      </div>
       <ol class="menu" id="menu"></ol>
       <div class="more-gate hidden" id="moreGate"></div>
     </div>
@@ -312,7 +352,7 @@
     <div class="mag-card">
       <div class="topslot" id="topslot"></div>
       <div class="pitch" id="pitch">
-        <span class="pill"><span class="dot"></span>Free download</span>
+        <span class="pill"><span class="dot"></span>Free guide</span>
         <div class="cover">
           <span class="c-kicker" id="c-kicker"></span>
           <span class="c-title" id="c-title"></span>
@@ -322,27 +362,24 @@
         <div class="pitch-hero" id="pitchHero" style="display:none"></div>
         <h1 class="mag-h1"><span id="h1lead"></span> <em class="accent" id="h1accent"></em></h1>
         <p class="intro" id="intro"></p>
-        <form id="capture" novalidate>
-          <label class="sr" for="email">Email address</label>
-          <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" required />
-          <button type="submit" class="cta" id="submit"><span class="label">Get instant access</span><span class="spin" aria-hidden="true"></span></button>
-          <p class="fineprint">No spam, and you can leave with one click.</p>
-          <p class="msg" id="msg" role="status" aria-live="polite"></p>
-        </form>
       </div>
-      <div class="reveal" id="reveal">
-        <span class="r-eyebrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>You're in</span>
-        <h2 class="r-title" id="r-title"></h2>
-        <div class="box" id="box">
-          <div class="box-head">
-            <span class="glabel" id="glabel">Copy the prompt</span>
-            <button type="button" class="copy-btn" id="copyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="cl">Copy</span></button>
+
+      <div class="reveal show" id="reveal">
+        <span class="r-eyebrow" id="r-eyebrow" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>You're in</span>
+        <div id="magBody">
+          <div class="box" id="box">
+            <div class="box-head">
+              <span class="glabel" id="glabel">Copy the prompt</span>
+              <button type="button" class="copy-btn" id="copyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span class="cl">Copy</span></button>
+            </div>
+            <div class="gbody" id="gbody"></div>
           </div>
-          <div class="gbody" id="gbody"></div>
+          <article class="article" id="article"></article>
+          <div id="fileArea"></div>
         </div>
-        <article class="article" id="article"></article>
-        <div id="fileArea"></div>
-        <p class="done">It's on its way to your inbox too, so you've always got it.</p>
+
+        <div class="lock-gate" id="lockGate"></div>
+        <p class="done" id="doneNote" style="display:none">It's on its way to your inbox too, so you've always got it.</p>
       </div>
     </div>
   </section>
@@ -422,6 +459,7 @@ async function loadMagnets(){
     rows.forEach(r=>{
       if(!r.slug) return; const s=r.slug.trim();
       const obj={ slug:s, menu_title:r.menu_title||r.title||s, menu_desc:r.menu_desc||"", image:r.image||r.image_url||"", kicker:r.kicker||"",
+        category:(r.category||r.cat||"").trim(),
         title:r.title||"", titleAccent:r.title_accent||r.titleAccent||"", author:r.author||PROFILE.handle,
         intro:r.intro||r.subtitle||"", boxLabel:r.box_label||r.boxLabel||"Copy this",
         content:r.content||"", downloadUrl:r.download_url||r.downloadUrl||"",
@@ -457,27 +495,78 @@ function renderHome(){
   $('foot-socials').innerHTML=socialHTML();
   $('copy').textContent='© '+new Date().getFullYear()+' '+PROFILE.name+'. All rights reserved.';
   const menu=$('menu'); menu.innerHTML='';
-  ORDER.forEach((slug,i)=>{
+  ORDER.forEach((slug)=>{
     const m=MAP[slug]; const li=document.createElement('li'); li.className='menu-row';
+    const cat=(m.category||m.kicker||'Guides');
+    li.dataset.cat=cat;
+    li.dataset.text=((m.menu_title||'')+' '+(m.menu_desc||'')+' '+(m.kicker||'')+' '+(m.category||'')).toLowerCase();
     const a=document.createElement('a'); a.href='/'+slug; a.dataset.slug=slug;
     const imgHtml = m.image ? '<span class="m-img"><img src="'+m.image+'" alt="" loading="lazy"></span>' : '';
     a.innerHTML=imgHtml+'<span class="m-body"><span class="m-cat"></span><span class="m-title"></span><span class="m-blurb"></span><span class="m-read">Read the guide <span class="ar">&rarr;</span></span></span>';
-    a.querySelector('.m-cat').textContent=(m.kicker||'Guide');
+    a.querySelector('.m-cat').textContent=cat;
     a.querySelector('.m-title').textContent=m.menu_title;
     const b=a.querySelector('.m-blurb'); if(m.menu_desc){ b.textContent=m.menu_desc; } else { b.remove(); }
-    if(i >= VISIBLE_GUIDES) li.classList.add('locked');
     li.appendChild(a); menu.appendChild(li);
   });
-  buildMoreGate();
-  if(isSub()){ $('subscribe').style.display='none'; $('sub-note').style.display='none'; $('sub-ok').classList.add('show'); revealAllGuides(); }
+  buildFilters();
+  applyFilter();
+  if(isSub()){ $('subscribe').style.display='none'; $('sub-note').style.display='none'; $('sub-ok').classList.add('show'); }
 }
 
 const VISIBLE_GUIDES = 3;
+let FILTER={cat:'All',q:''};
+
+function categoryData(){
+  const counts={},order=[];
+  ORDER.forEach(s=>{ const c=(MAP[s].category||MAP[s].kicker||'Guides');
+    if(!(c in counts)){counts[c]=0;order.push(c);} counts[c]++; });
+  return {counts,order};
+}
+function buildFilters(){
+  const wrap=$('filters'); if(!wrap) return;
+  const {counts,order}=categoryData();
+  const show = ORDER.length>VISIBLE_GUIDES || order.length>1;
+  wrap.hidden=!show;
+  if(!show) return;
+  if(FILTER.cat!=='All' && !(FILTER.cat in counts)) FILTER.cat='All';
+  const pills=$('pills'); pills.innerHTML='';
+  const mk=(label,count,cat)=>{
+    const b=document.createElement('button'); b.type='button';
+    b.className='pill-btn'+(FILTER.cat===cat?' active':'');
+    b.setAttribute('aria-selected',FILTER.cat===cat?'true':'false');
+    b.innerHTML='<span class="lab"></span><span class="cnt"></span>';
+    b.querySelector('.lab').textContent=label;
+    b.querySelector('.cnt').textContent=count;
+    b.addEventListener('click',()=>{ FILTER.cat=cat; buildFilters(); applyFilter(); });
+    return b;
+  };
+  pills.appendChild(mk('All',ORDER.length,'All'));
+  order.forEach(c=>pills.appendChild(mk(c,counts[c],c)));
+  const search=$('search');
+  if(search) search.placeholder='Search '+ORDER.length+' resource'+(ORDER.length===1?'':'s');
+}
+function applyFilter(){
+  const rows=[...document.querySelectorAll('#menu .menu-row')];
+  const matched=rows.filter(li=>{
+    const catOk = FILTER.cat==='All' || li.dataset.cat===FILTER.cat;
+    const qOk = !FILTER.q || (li.dataset.text||'').includes(FILTER.q);
+    return catOk && qOk;
+  });
+  const sub=isSub(); let shown=0;
+  rows.forEach(li=>li.classList.add('locked'));
+  matched.forEach((li,idx)=>{ if(sub||idx<VISIBLE_GUIDES){ li.classList.remove('locked'); shown++; } });
+  buildMoreGate(matched.length-shown);
+  let nm=$('noMatch');
+  if(matched.length===0){
+    if(!nm){ nm=document.createElement('li'); nm.id='noMatch'; nm.className='no-match'; $('menu').appendChild(nm); }
+    nm.textContent='No guides match that — try another category or search.'; nm.style.display='';
+  } else if(nm){ nm.style.display='none'; }
+}
 function hiddenCount(){ return Math.max(0, ORDER.length - VISIBLE_GUIDES); }
-function buildMoreGate(){
+function buildMoreGate(n){
   const gate=$('moreGate'); if(!gate) return;
-  const n=hiddenCount();
-  if(n<=0 || isSub()){ gate.classList.add('hidden'); return; }
+  if(n===undefined) n=hiddenCount();
+  if(n<=0 || isSub()){ gate.classList.add('hidden'); gate.innerHTML=''; return; }
   gate.classList.remove('hidden');
   gate.innerHTML =
     '<p class="mg-title">More guides inside</p>'+
@@ -499,10 +588,7 @@ function buildMoreGate(){
     }catch(err){ btn.classList.remove('loading'); btn.disabled=false; msg.textContent='Something went wrong — try again in a moment.'; }
   });
 }
-function revealAllGuides(){
-  document.querySelectorAll('#menu .menu-row.locked').forEach(li=>li.classList.remove('locked'));
-  const gate=$('moreGate'); if(gate) gate.classList.add('hidden');
-}
+function revealAllGuides(){ applyFilter(); }
 
 /* ---------- MAGNET render ---------- */
 function renderMagnet(m){
@@ -511,49 +597,101 @@ function renderMagnet(m){
   const cover=document.querySelector('#pitch .cover'); const heroWrap=$('pitchHero');
   if(m.image){ cover.style.display='none'; heroWrap.style.display='block'; heroWrap.innerHTML='<img src="'+m.image+'" alt="">'; }
   else { cover.style.display='flex'; heroWrap.style.display='none'; heroWrap.innerHTML=''; }
-  $('c-kicker').textContent=m.kicker||"Free download";
+  $('c-kicker').textContent=m.kicker||m.category||"Free guide";
   $('c-title').textContent=m.title||"";
   $('c-by').textContent=m.author||PROFILE.handle;
   $('h1lead').textContent=m.title||"";
   const acc=$('h1accent'); if(m.titleAccent){acc.textContent=m.titleAccent;acc.style.display='';}else{acc.style.display='none';}
   $('intro').textContent=m.intro||"";
   document.title=(m.menu_title||'Free guide')+' — '+PROFILE.name;
-  const form=$('capture'); form.style.display='flex'; form.reset();
   $('pitch').style.display='flex';
-  $('msg').textContent=''; $('email').classList.remove('invalid');
-  const btn=$('submit'); btn.classList.remove('loading'); btn.disabled=false;
-  $('reveal').classList.remove('show'); $('fileArea').innerHTML='';
-  if(isSub()){ deliver(m); }   // already subscribed — open straight to the content
+  deliver(m);
+}
+
+/* Keep the first `frac` of top-level blocks so a locked guide shows only a teaser */
+function clampHTML(html, frac){
+  const d=document.createElement('div'); d.innerHTML=html;
+  const kids=[...d.children].filter(n=>!(n.classList&&n.classList.contains('art-hero')));
+  const hero=[...d.children].find(n=>n.classList&&n.classList.contains('art-hero'));
+  if(kids.length<=3) return html;
+  const keep=Math.max(3, Math.ceil(kids.length*frac));
+  const parts=kids.slice(0,keep).map(n=>n.outerHTML);
+  return (hero?hero.outerHTML:'')+parts.join('');
 }
 
 async function deliver(m){
-  $('r-title').textContent=m.menu_title||m.title||"Your guide";
+  const sub=isSub();
   const hasArticle=!!(m.article&&m.article.trim());
   const hasGuide=!hasArticle && !!(m.guideMd&&m.guideMd.trim());
   const hasContent=!hasArticle && !hasGuide && !!(m.content&&m.content.trim());
   const hasFile=!hasArticle && !hasGuide && !!(m.downloadUrl&&m.downloadUrl.trim());
-  const box=$('box'); const art=$('article');
+  const box=$('box'), art=$('article'), fa=$('fileArea');
   const banner = m.image ? '<div class="art-hero"><img src="'+m.image+'" alt=""></div>' : '';
+
+  /* ----- written guide / article ----- */
   if(hasArticle||hasGuide){
-    art.innerHTML = banner + (hasArticle ? m.article : '<p class="muted">Loading…</p>');
-    art.style.display='block'; box.style.display='none';
-    $('fileArea').innerHTML=''; $('pitch').style.display='none'; $('reveal').classList.add('show');
-    if(hasGuide){ art.innerHTML = banner + await renderMarkdown(m.guideMd); }
-    return;
+    box.style.display='none';
+    let full = hasArticle ? m.article : await renderMarkdown(m.guideMd);
+    art.style.display='block';
+    art.innerHTML = banner + (sub ? full : clampHTML(full, 0.4));
   } else { art.style.display='none'; art.innerHTML=''; }
-  if(hasContent||(!hasContent&&!hasFile)){
+
+  /* ----- copy-paste prompt ----- */
+  if(hasContent){
     box.style.display='';
-    if(hasContent){ $('glabel').textContent=m.boxLabel||"Copy this"; $('gbody').textContent=m.content; }
-    else { $('glabel').textContent="Nothing here yet"; $('gbody').textContent="Add this magnet's prompt (content) or a file link (download_url)."; }
+    $('glabel').textContent=m.boxLabel||"Copy this";
+    if(sub){ $('gbody').textContent=m.content; }
+    else { const n=Math.min(m.content.length, Math.max(120, Math.ceil(m.content.length*0.4))); $('gbody').textContent=m.content.slice(0,n).trimEnd()+(n<m.content.length?' …':''); }
     $('copyBtn').onclick=async ()=>{ const lbl=$('copyBtn').querySelector('.cl');
       try{ await navigator.clipboard.writeText(m.content||''); lbl.textContent='Copied'; setTimeout(()=>{lbl.textContent='Copy';},1600); }
       catch(e){ const rng=document.createRange(); rng.selectNodeContents($('gbody')); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(rng); lbl.textContent='Ctrl/Cmd+C'; } };
+  } else if(!hasArticle && !hasGuide && !hasFile){
+    box.style.display='';
+    $('glabel').textContent="Nothing here yet"; $('gbody').textContent="Add this guide's prompt (content) or a file link (download_url).";
   } else { box.style.display='none'; }
-  const fa=$('fileArea'); fa.innerHTML='';
-  if(hasFile){ const a=document.createElement('a'); a.className='dl'; a.href=m.downloadUrl; a.target='_blank'; a.rel='noopener';
+
+  /* ----- file / link ----- */
+  fa.innerHTML='';
+  if(hasFile && sub){ const a=document.createElement('a'); a.className='dl'; a.href=m.downloadUrl; a.target='_blank'; a.rel='noopener';
     a.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>Open the guide'; fa.appendChild(a); }
-  $('pitch').style.display='none';
-  $('reveal').classList.add('show');
+
+  /* ----- lock vs unlock ----- */
+  const body=$('magBody'), done=$('doneNote'), eyebrow=$('r-eyebrow');
+  if(sub){
+    body.classList.remove('preview');
+    $('lockGate').classList.remove('show'); $('lockGate').innerHTML='';
+    done.style.display=''; eyebrow.style.display='inline-flex';
+  } else {
+    body.classList.add('preview');
+    done.style.display='none'; eyebrow.style.display='none';
+    buildLockGate(m, hasFile);
+  }
+}
+
+function buildLockGate(m, isFileOnly){
+  const gate=$('lockGate'); if(!gate) return;
+  const title = isFileOnly ? ('Get '+(m.menu_title||'the download')) : ('Unlock '+(m.menu_title||'the full guide'));
+  gate.innerHTML =
+    '<div class="lg-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>'+
+    '<p class="lg-title">'+ (isFileOnly?'Get the download':'Read the full guide') +'</p>'+
+    '<p class="lg-sub">Drop your email to unlock the rest — free, plus one short email a week. Leave anytime.</p>'+
+    '<form id="gateForm" class="sub-pill" novalidate>'+
+      '<input id="gate-email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" required />'+
+      '<button type="submit" class="cta"><span class="label">'+(isFileOnly?'Get it':'Unlock')+'</span><span class="spin" aria-hidden="true"></span></button>'+
+    '</form>'+
+    '<p class="msg" id="gate-msg" role="status" aria-live="polite"></p>';
+  gate.classList.add('show');
+  $('gateForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const input=$('gate-email'), btn=e.target.querySelector('button'), msg=$('gate-msg');
+    msg.textContent=''; input.classList.remove('invalid');
+    const email=input.value.trim();
+    if(!validEmail(email)){ input.classList.add('invalid'); msg.textContent="That email doesn't look right — mind checking it?"; input.focus(); return; }
+    btn.classList.add('loading'); btn.disabled=true;
+    try{ await storeEmail(email, m.slug); setSub(); await deliver(m);
+      try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(_){}
+    }catch(err){ btn.classList.remove('loading'); btn.disabled=false; msg.textContent='Something went wrong — try again in a moment.'; }
+  });
 }
 
 /* ---------- routing ---------- */
@@ -584,6 +722,9 @@ document.addEventListener('click',e=>{
 (async function init(){ try{ await loadMagnets(); }catch(e){ MAP={};ORDER=[];MAGNETS.forEach(m=>{MAP[m.slug]=m;ORDER.push(m.slug);}); }
   $('boot').classList.add('hidden'); route(); })();
 
+/* ---------- search (home) ---------- */
+(function(){ const s=$('search'); if(s) s.addEventListener('input',e=>{ FILTER.q=e.target.value.trim().toLowerCase(); applyFilter(); }); })();
+
 /* ---------- subscribe (home) ---------- */
 $('subscribe').addEventListener('submit',async(e)=>{
   e.preventDefault();
@@ -597,18 +738,6 @@ $('subscribe').addEventListener('submit',async(e)=>{
   }catch(err){ btn.classList.remove('loading'); btn.disabled=false; msg.textContent='Something went wrong — try again in a moment.'; }
 });
 
-/* ---------- magnet gate ---------- */
-$('capture').addEventListener('submit',async(e)=>{
-  e.preventDefault();
-  const input=$('email'),btn=$('submit'),msg=$('msg');
-  msg.textContent=''; input.classList.remove('invalid');
-  const email=input.value.trim();
-  if(!validEmail(email)){ input.classList.add('invalid'); msg.textContent="That email doesn't look right — mind checking it?"; input.focus(); return; }
-  btn.classList.add('loading'); btn.disabled=true;
-  const m=MAP[activeSlug];
-  try{ await storeEmail(email,activeSlug); setSub(); deliver(m);
-  }catch(err){ btn.classList.remove('loading'); btn.disabled=false; msg.textContent='Something went wrong — try again in a moment.'; }
-});
 </script>
 <script>
 (() => {
