@@ -143,9 +143,15 @@
   .m-read .ar{display:inline-block;transition:transform .18s}
   .menu-row a:hover .m-read .ar{transform:translateX(4px)}
   .menu-row.locked{display:none}
-  .more-gate{grid-column:1/-1;margin-top:8px;text-align:center;border:1.5px dashed var(--line);border-radius:18px;
-    padding:clamp(24px,4vw,34px);background:rgba(255,255,255,.5)}
+  .more-gate{margin:30px 0 0;text-align:center}
   .more-gate.hidden{display:none}
+  .all-btn{font-family:"Space Mono",ui-monospace,monospace;font-weight:700;font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;
+    display:inline-flex;align-items:center;gap:10px;padding:15px 30px;border-radius:999px;border:1.5px solid var(--maroon);
+    background:#fff;color:var(--maroon);cursor:pointer;transition:background .15s,color .15s,transform .06s}
+  .all-btn:hover{background:var(--maroon);color:#fff}
+  .all-btn:active{transform:translateY(1px)}
+  .all-btn .ar{display:inline-block;transition:transform .18s}
+  .all-btn:hover .ar{transform:translateX(4px)}
   .mg-title{font-family:"Space Mono",ui-monospace,monospace;font-weight:700;font-size:1.05rem;margin:0 0 4px;color:var(--ink)}
   .mg-sub{color:var(--muted);font-size:.95rem;margin:0 0 16px}
   .more-gate .sub-pill{margin:0 auto}
@@ -514,7 +520,7 @@ function renderHome(){
 }
 
 const VISIBLE_GUIDES = 3;
-let FILTER={cat:'All',q:''};
+let FILTER={cat:'All',q:''}, SHOW_ALL=false;
 
 function categoryData(){
   const counts={},order=[];
@@ -552,9 +558,9 @@ function applyFilter(){
     const qOk = !FILTER.q || (li.dataset.text||'').includes(FILTER.q);
     return catOk && qOk;
   });
-  const sub=isSub(); let shown=0;
+  const openAll=isSub()||SHOW_ALL; let shown=0;
   rows.forEach(li=>li.classList.add('locked'));
-  matched.forEach((li,idx)=>{ if(sub||idx<VISIBLE_GUIDES){ li.classList.remove('locked'); shown++; } });
+  matched.forEach((li,idx)=>{ if(openAll||idx<VISIBLE_GUIDES){ li.classList.remove('locked'); shown++; } });
   buildMoreGate(matched.length-shown);
   let nm=$('noMatch');
   if(matched.length===0){
@@ -562,31 +568,12 @@ function applyFilter(){
     nm.textContent='No guides match that — try another category or search.'; nm.style.display='';
   } else if(nm){ nm.style.display='none'; }
 }
-function hiddenCount(){ return Math.max(0, ORDER.length - VISIBLE_GUIDES); }
 function buildMoreGate(n){
   const gate=$('moreGate'); if(!gate) return;
-  if(n===undefined) n=hiddenCount();
-  if(n<=0 || isSub()){ gate.classList.add('hidden'); gate.innerHTML=''; return; }
+  if(n<=0){ gate.classList.add('hidden'); gate.innerHTML=''; return; }
   gate.classList.remove('hidden');
-  gate.innerHTML =
-    '<p class="mg-title">More guides inside</p>'+
-    '<p class="mg-sub">Drop your email to unlock the full library, free.</p>'+
-    '<form id="moreForm" class="sub-pill" novalidate>'+
-      '<input id="more-email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" required />'+
-      '<button type="submit" class="cta"><span class="label">Unlock all</span><span class="spin" aria-hidden="true"></span></button>'+
-    '</form>'+
-    '<p class="msg" id="more-msg" role="status" aria-live="polite"></p>';
-  $('moreForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const input=$('more-email'), btn=e.target.querySelector('button'), msg=$('more-msg');
-    msg.textContent=''; input.classList.remove('invalid');
-    const email=input.value.trim();
-    if(!validEmail(email)){ input.classList.add('invalid'); msg.textContent="That email doesn't look right — mind checking it?"; input.focus(); return; }
-    btn.classList.add('loading'); btn.disabled=true;
-    try{ await storeEmail(email,'newsletter'); setSub(); revealAllGuides();
-      $('subscribe').style.display='none'; $('sub-note').style.display='none'; $('sub-ok').classList.add('show');
-    }catch(err){ btn.classList.remove('loading'); btn.disabled=false; msg.textContent='Something went wrong — try again in a moment.'; }
-  });
+  gate.innerHTML='<button type="button" class="all-btn" id="allBtn">All resources <span class="ar" aria-hidden="true">&rarr;</span></button>';
+  $('allBtn').addEventListener('click',()=>{ SHOW_ALL=true; applyFilter(); try{ document.getElementById('menu').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} });
 }
 function revealAllGuides(){ applyFilter(); }
 
@@ -626,14 +613,13 @@ async function deliver(m){
   const hasContent=!hasArticle && !hasGuide && !!(m.content&&m.content.trim());
   const hasFile=!hasArticle && !hasGuide && !!(m.downloadUrl&&m.downloadUrl.trim());
   const box=$('box'), art=$('article'), fa=$('fileArea');
-  const banner = m.image ? '<div class="art-hero"><img src="'+m.image+'" alt=""></div>' : '';
 
   /* ----- written guide / article ----- */
   if(hasArticle||hasGuide){
     box.style.display='none';
     let full = hasArticle ? m.article : await renderMarkdown(m.guideMd);
     art.style.display='block';
-    art.innerHTML = banner + (sub ? full : clampHTML(full, 0.4));
+    art.innerHTML = (sub ? full : clampHTML(full, 0.4));
   } else { art.style.display='none'; art.innerHTML=''; }
 
   /* ----- copy-paste prompt ----- */
