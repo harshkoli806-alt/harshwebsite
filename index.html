@@ -371,7 +371,6 @@
       </div>
 
       <div class="reveal show" id="reveal">
-        <span class="r-eyebrow" id="r-eyebrow" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>You're in</span>
         <div id="magBody">
           <div class="box" id="box">
             <div class="box-head">
@@ -646,14 +645,14 @@ async function deliver(m){
     a.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>Open the guide'; fa.appendChild(a); }
 
   /* ----- lock vs unlock ----- */
-  const body=$('magBody'), done=$('doneNote'), eyebrow=$('r-eyebrow');
+  const body=$('magBody'), done=$('doneNote');
   if(sub){
     body.classList.remove('preview');
     $('lockGate').classList.remove('show'); $('lockGate').innerHTML='';
-    done.style.display=''; eyebrow.style.display='inline-flex';
+    done.style.display='';
   } else {
     body.classList.add('preview');
-    done.style.display='none'; eyebrow.style.display='none';
+    done.style.display='none';
     buildLockGate(m, hasFile);
   }
 }
