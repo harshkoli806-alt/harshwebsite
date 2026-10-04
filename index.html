@@ -531,11 +531,15 @@ function categoryData(){
 function buildFilters(){
   const wrap=$('filters'); if(!wrap) return;
   const {counts,order}=categoryData();
-  const show = ORDER.length>VISIBLE_GUIDES || order.length>1;
-  wrap.hidden=!show;
-  if(!show) return;
+  const showPills  = order.length>1;                 // only when guides actually differ in category
+  const showSearch = ORDER.length>VISIBLE_GUIDES;     // search once there's a real library
+  wrap.hidden = !(showPills||showSearch);
+  const sw=wrap.querySelector('.search-wrap'); if(sw) sw.style.display = showSearch?'block':'none';
+  const pills=$('pills'); pills.style.display = showPills?'flex':'none';
+  if(wrap.hidden) return;
   if(FILTER.cat!=='All' && !(FILTER.cat in counts)) FILTER.cat='All';
-  const pills=$('pills'); pills.innerHTML='';
+  pills.innerHTML='';
+  if(!showPills){ const s=$('search'); if(s) s.placeholder='Search '+ORDER.length+' resource'+(ORDER.length===1?'':'s'); return; }
   const mk=(label,count,cat)=>{
     const b=document.createElement('button'); b.type='button';
     b.className='pill-btn'+(FILTER.cat===cat?' active':'');
