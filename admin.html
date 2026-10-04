@@ -94,6 +94,17 @@
         </div>
       </div>
 
+      <label>Category <span class="hint">— groups it under a filter pill on your site</span></label>
+      <input type="text" id="category" list="catList" placeholder="e.g. Prompts" />
+      <datalist id="catList">
+        <option value="Prompts"></option>
+        <option value="Systems & Agents"></option>
+        <option value="Video"></option>
+        <option value="Image & Carousel"></option>
+        <option value="Playbooks"></option>
+        <option value="Setup guides"></option>
+      </datalist>
+
       <label>Short description <span class="hint">— one line under the card title</span></label>
       <input type="text" id="desc" placeholder="The 4-tool stack I use to build a premium site fast." />
 
@@ -171,7 +182,7 @@ $('publish').onclick=async ()=>{
   if(!title){ msg('Add a title first.','err'); return; }
   const slug = EDIT_SLUG || slugify(title) || ('guide-'+Date.now());
   const payload={ type:'magnet', key:KEY, slug,
-    menu_title:title, menu_desc:$('desc').value.trim(), kicker:$('kicker').value.trim()||'The Guide',
+    menu_title:title, menu_desc:$('desc').value.trim(), category:$('category').value.trim(), kicker:$('kicker').value.trim()||'The Guide',
     title:title, title_accent:$('accent').value.trim(), author:'@harshhh__ai',
     intro:$('intro').value.trim(), box_label: TYPE==='prompt'?'Copy the prompt':'',
     content: TYPE==='prompt'?$('content').value:'',
@@ -211,6 +222,7 @@ function editGuide(r){
   $('title').value=r.menu_title||r.title||'';
   $('kicker').value=r.kicker||'';
   $('accent').value=r.title_accent||r.titleAccent||'';
+  $('category').value=r.category||r.cat||'';
   $('desc').value=r.menu_desc||'';
   $('intro').value=r.intro||'';
   const md=r.guide_md||r.guideMd||r.markdown||'';
@@ -263,7 +275,7 @@ async function deleteGuide(slug, title, li){
   }catch(e){ li.style.opacity='1'; alert('Could not delete — try again.'); }
 }
 function msg(t,cls){ const m=$('msg'); m.textContent=t; m.className='msg '+(cls||''); }
-function resetForm(){ ['title','kicker','accent','desc','intro','content','guide_md','download','notion_url'].forEach(id=>{ if($(id)) $(id).value=''; });
+function resetForm(){ ['title','kicker','accent','category','desc','intro','content','guide_md','download','notion_url'].forEach(id=>{ if($(id)) $(id).value=''; });
   imgData=''; $('preview').style.display='none'; $('dropPh').textContent='Tap to attach a cover, or drag one here'; }
 </script>
 </body>
