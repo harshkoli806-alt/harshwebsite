@@ -729,6 +729,43 @@ $('subscribe').addEventListener('submit',async(e)=>{
 
 </script>
 <script>
+/* ---------- button click sound ----------
+   Drop your own sound in the repo root as  click.mp3  (or change CLICK_SRC below to
+   click.wav etc.). If the file is missing, a soft synthesized click is used instead. */
+(() => {
+  const CLICK_SRC = '/click.mp3';
+  const VOLUME = 0.55;
+  let baseAudio=null, audioOK=false, actx=null;
+  try{
+    baseAudio=new Audio(CLICK_SRC); baseAudio.preload='auto'; baseAudio.volume=VOLUME;
+    baseAudio.addEventListener('canplaythrough',()=>{audioOK=true;}, {once:true});
+    baseAudio.addEventListener('error',()=>{audioOK=false;});
+    baseAudio.load();
+  }catch(e){ audioOK=false; }
+
+  function synth(){
+    try{
+      actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+      if(actx.state==='suspended') actx.resume();
+      const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+      o.type='triangle';
+      o.frequency.setValueAtTime(620,t); o.frequency.exponentialRampToValueAtTime(930,t+0.05);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.10,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+0.15);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+0.17);
+    }catch(e){}
+  }
+  function ping(){
+    if(audioOK && baseAudio){
+      try{ const a=baseAudio.cloneNode(); a.volume=VOLUME; const p=a.play(); if(p&&p.catch) p.catch(()=>synth()); return; }catch(e){}
+    }
+    synth();
+  }
+  // fires on the main buttons and the guide cards, before their own handlers run
+  document.addEventListener('click', (e)=>{
+    if(e.target.closest('button.cta, .all-btn, .copy-btn, .tb-sub, a[data-slug], a[data-home]')) ping();
+  }, true);
+})();
+
 (() => {
   const canvas = document.getElementById('bg-canvas');
   if(!canvas) return;
